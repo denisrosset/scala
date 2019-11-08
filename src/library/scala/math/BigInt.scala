@@ -110,12 +110,25 @@ object BigInt {
   implicit def javaBigInteger2bigInt(x: BigInteger): BigInt = apply(x)
 }
 
-final class BigInt (val bigInteger: BigInteger)
+/** An arbitrary integer type; wraps `java.math.BigInteger`, with optimization for small values that can
+ * be encoded in a `Long`.
+ */
+final class BigInt private (_bigInteger: BigInteger, _long: Long)
   extends ScalaNumber
     with ScalaNumericConversions
     with Serializable
     with Ordered[BigInt]
 {
+  // Class invariant: if the number fits in a Long, then _bigInteger is null and the number is stored in _long
+  //                  otherwise, _bigInteger stores the number and _long = 0L
+
+  def this(_bigInteger: BigInteger) = this(
+    if (_bigInteger.bitLength <= 63) null else _bigInteger,
+    if (_bigInteger.bitLength <= 63) _bigInteger.longValue else 0L
+  )
+
+  def bigInteger: BigInteger = if (_bigInteger eq null) BigInteger.valueOf(_long) else _bigInteger
+
   /** Returns the hash code for this BigInt. */
   override def hashCode(): Int =
     if (isValidLong) unifiedPrimitiveHashcode
