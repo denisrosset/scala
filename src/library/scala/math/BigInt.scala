@@ -130,11 +130,11 @@ final class BigInt (val bigInteger: BigInteger)
     case that: Float      => isValidFloat && toFloat == that
     case x                => isValidLong && unifiedPrimitiveEquals(x)
   }
-  override def isValidByte: Boolean = this >= Byte.MinValue && this <= Byte.MaxValue
-  override def isValidShort: Boolean = this >= Short.MinValue && this <= Short.MaxValue
-  override def isValidChar: Boolean = this >= Char.MinValue && this <= Char.MaxValue
-  override def isValidInt: Boolean = this >= Int.MinValue && this <= Int.MaxValue
-           def isValidLong: Boolean = this >= Long.MinValue && this <= Long.MaxValue
+  override def isValidByte: Boolean = bigInteger.bitLength <= 7
+  override def isValidShort: Boolean = bigInteger.bitLength <= 15
+  override def isValidChar: Boolean = bigInteger.signum > 0 && bigInteger.bitLength <= 16
+  override def isValidInt: Boolean = bigInteger.bitLength <= 31
+           def isValidLong: Boolean = bigInteger.bitLength <= 63
   /** Returns `true` iff this can be represented exactly by [[scala.Float]]; otherwise returns `false`.
     */
   def isValidFloat: Boolean = {
@@ -176,7 +176,7 @@ final class BigInt (val bigInteger: BigInteger)
 
   /** Compares this BigInt with the specified BigInt for equality.
    */
-  def equals (that: BigInt): Boolean = compare(that) == 0
+  def equals (that: BigInt): Boolean = this.bigInteger == that.bigInteger
 
   /** Compares this BigInt with the specified BigInt
    */
@@ -374,7 +374,7 @@ final class BigInt (val bigInteger: BigInteger)
    *  `Float.POSITIVE_INFINITY` as appropriate.
    */
   def floatValue: Float = this.bigInteger.floatValue
-
+  
   /** Converts this `BigInt` to a `double`.
    *  if this `BigInt` has too great a magnitude to represent as a double,
    *  it will be converted to `Double.NEGATIVE_INFINITY` or
