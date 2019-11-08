@@ -11,7 +11,8 @@ object BigIntProperties extends Properties("BigInt") {
 
   val positiveNumberString: Gen[String] = for {
     firstDigit <- Gen.choose('1', '9')
-    digits <- Gen.listOf(Gen.choose('0', '9'))
+    nDigits <- Gen.choose(0, 30)
+    digits <- Gen.listOfN(nDigits, Gen.choose('0', '9'))
   } yield firstDigit +: digits.mkString
 
   val negativeNumberString: Gen[String] = positiveNumberString.map("-" + _)
@@ -37,7 +38,8 @@ object BigIntProperties extends Properties("BigInt") {
   val stringAndRadix: Gen[(String, Int)] = for {
     rdx <- radix
     firstDigit <- Gen.choose(1, rdx - 1).map(Character.forDigit(_, rdx))
-    digits <- Gen.listOf(Gen.choose(0, rdx - 1).map(i => Character.forDigit(i, rdx)))
+    nDigits <- Gen.choose(0, 30)
+    digits <- Gen.listOfN(nDigits, Gen.choose(0, rdx - 1).map(i => Character.forDigit(i, rdx)))
   } yield (firstDigit +: digits.mkString, rdx)
 
   val shift: Gen[Int] = for {
