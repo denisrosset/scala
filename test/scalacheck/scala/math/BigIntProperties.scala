@@ -132,15 +132,13 @@ object BigIntProperties extends Properties("BigInt") {
   property("lowestSetBit") = forAll(bigInteger) { x => x.getLowestSetBit ?= BigInt(x).lowestSetBit }
   property("bitLength") = forAll(bigInteger) { x => x.bitLength ?= BigInt(x).bitLength }
   property("bitCount") = forAll(bigInteger) { x => x.bitCount ?= BigInt(x).bitCount }
-  // property("byteValue")
-  // property("shortValue")
-  // property("charValue")
-  // property("intValue")
-  // property("longValue")
-  // property("floatValue")
-  // property("doubleValue")
-  // property("until")
-  // property("to")
+  property("byteValue") = forAll(bigInteger) { x => x.byteValue ?= BigInt(x).byteValue }
+  property("shortValue") = forAll(bigInteger) { x => x.shortValue ?= BigInt(x).shortValue }
+  property("charValue") = forAll(bigInteger) { x => x.intValue.toChar ?= BigInt(x).charValue }
+  property("intValue") = forAll(bigInteger) { x => x.intValue ?= BigInt(x).intValue }
+  property("longValue") = forAll(bigInteger) { x => x.longValue ?= BigInt(x).longValue }
+  property("floatValue") = forAll(bigInteger) { x => x.floatValue ?= BigInt(x).floatValue }
+  property("doubleValue") = forAll(bigInteger) { x => x.doubleValue ?= BigInt(x).doubleValue }
   property("toString") = forAll(bigInteger) { bi => new BigInteger(BigInt(bi).toString) ?= bi }
   property("toString(radix: Int)") = forAll(bigInt, radix) { (bi, r) => BigInt(bi.toString(r), r) ?= bi }
   property("toByteArray") = forAll(bigInt) { bi => BigInt(bi.toByteArray) ?= bi }
