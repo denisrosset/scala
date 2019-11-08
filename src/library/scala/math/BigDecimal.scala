@@ -699,14 +699,14 @@ extends ScalaNumber with ScalaNumericConversions with Serializable with Ordered[
 
   /** Converts this `BigDecimal` to a scala.BigInt.
    */
-  def toBigInt: BigInt = new BigInt(this.bigDecimal.toBigInteger)
+  def toBigInt: BigInt = BigInt(this.bigDecimal.toBigInteger)
 
   /** Converts this `BigDecimal` to a scala.BigInt if it
    *  can be done losslessly, returning Some(BigInt) or None.
    */
   def toBigIntExact: Option[BigInt] =
     if (isWhole) {
-      try Some(new BigInt(this.bigDecimal.toBigIntegerExact))
+      try Some(BigInt(this.bigDecimal.toBigIntegerExact))
       catch { case _: ArithmeticException => None }
     }
     else None

@@ -110,7 +110,7 @@ object BigInt {
   implicit def javaBigInteger2bigInt(x: BigInteger): BigInt = apply(x)
 }
 
-final class BigInt(val bigInteger: BigInteger)
+final class BigInt (val bigInteger: BigInteger)
   extends ScalaNumber
     with ScalaNumericConversions
     with Serializable
@@ -184,94 +184,94 @@ final class BigInt(val bigInteger: BigInteger)
 
   /** Addition of BigInts
    */
-  def +  (that: BigInt): BigInt = new BigInt(this.bigInteger.add(that.bigInteger))
+  def +  (that: BigInt): BigInt = BigInt(this.bigInteger.add(that.bigInteger))
 
   /** Subtraction of BigInts
    */
-  def -  (that: BigInt): BigInt = new BigInt(this.bigInteger.subtract(that.bigInteger))
+  def -  (that: BigInt): BigInt = BigInt(this.bigInteger.subtract(that.bigInteger))
 
   /** Multiplication of BigInts
    */
-  def *  (that: BigInt): BigInt = new BigInt(this.bigInteger.multiply(that.bigInteger))
+  def *  (that: BigInt): BigInt = BigInt(this.bigInteger.multiply(that.bigInteger))
 
   /** Division of BigInts
    */
-  def /  (that: BigInt): BigInt = new BigInt(this.bigInteger.divide(that.bigInteger))
+  def /  (that: BigInt): BigInt = BigInt(this.bigInteger.divide(that.bigInteger))
 
   /** Remainder of BigInts
    */
-  def %  (that: BigInt): BigInt = new BigInt(this.bigInteger.remainder(that.bigInteger))
+  def %  (that: BigInt): BigInt = BigInt(this.bigInteger.remainder(that.bigInteger))
 
   /** Returns a pair of two BigInts containing (this / that) and (this % that).
    */
   def /% (that: BigInt): (BigInt, BigInt) = {
     val dr = this.bigInteger.divideAndRemainder(that.bigInteger)
-    (new BigInt(dr(0)), new BigInt(dr(1)))
+    (BigInt(dr(0)), BigInt(dr(1)))
   }
 
   /** Leftshift of BigInt
    */
-  def << (n: Int): BigInt = new BigInt(this.bigInteger.shiftLeft(n))
+  def << (n: Int): BigInt = BigInt(this.bigInteger.shiftLeft(n))
 
   /** (Signed) rightshift of BigInt
    */
-  def >> (n: Int): BigInt = new BigInt(this.bigInteger.shiftRight(n))
+  def >> (n: Int): BigInt = BigInt(this.bigInteger.shiftRight(n))
 
   /** Bitwise and of BigInts
    */
-  def &  (that: BigInt): BigInt = new BigInt(this.bigInteger.and(that.bigInteger))
+  def &  (that: BigInt): BigInt = BigInt(this.bigInteger.and(that.bigInteger))
 
   /** Bitwise or of BigInts
    */
-  def |  (that: BigInt): BigInt = new BigInt(this.bigInteger.or (that.bigInteger))
+  def |  (that: BigInt): BigInt = BigInt(this.bigInteger.or (that.bigInteger))
 
   /** Bitwise exclusive-or of BigInts
    */
-  def ^  (that: BigInt): BigInt = new BigInt(this.bigInteger.xor(that.bigInteger))
+  def ^  (that: BigInt): BigInt = BigInt(this.bigInteger.xor(that.bigInteger))
 
   /** Bitwise and-not of BigInts. Returns a BigInt whose value is (this & ~that).
    */
-  def &~ (that: BigInt): BigInt = new BigInt(this.bigInteger.andNot(that.bigInteger))
+  def &~ (that: BigInt): BigInt = BigInt(this.bigInteger.andNot(that.bigInteger))
 
   /** Returns the greatest common divisor of abs(this) and abs(that)
    */
-  def gcd (that: BigInt): BigInt = new BigInt(this.bigInteger.gcd(that.bigInteger))
+  def gcd (that: BigInt): BigInt = BigInt(this.bigInteger.gcd(that.bigInteger))
 
   /** Returns a BigInt whose value is (this mod that).
    *  This method differs from `%` in that it always returns a non-negative BigInt.
    *  @param that A positive number
    */
-  def mod (that: BigInt): BigInt = new BigInt(this.bigInteger.mod(that.bigInteger))
+  def mod (that: BigInt): BigInt = BigInt(this.bigInteger.mod(that.bigInteger))
 
   /** Returns the minimum of this and that
    */
-  def min (that: BigInt): BigInt = new BigInt(this.bigInteger.min(that.bigInteger))
+  def min (that: BigInt): BigInt = BigInt(this.bigInteger.min(that.bigInteger))
 
   /** Returns the maximum of this and that
    */
-  def max (that: BigInt): BigInt = new BigInt(this.bigInteger.max(that.bigInteger))
+  def max (that: BigInt): BigInt = BigInt(this.bigInteger.max(that.bigInteger))
 
   /** Returns a BigInt whose value is (<tt>this</tt> raised to the power of <tt>exp</tt>).
    */
-  def pow (exp: Int): BigInt = new BigInt(this.bigInteger.pow(exp))
+  def pow (exp: Int): BigInt = BigInt(this.bigInteger.pow(exp))
 
   /** Returns a BigInt whose value is
    *  (<tt>this</tt> raised to the power of <tt>exp</tt> modulo <tt>m</tt>).
    */
   def modPow (exp: BigInt, m: BigInt): BigInt =
-    new BigInt(this.bigInteger.modPow(exp.bigInteger, m.bigInteger))
+    BigInt(this.bigInteger.modPow(exp.bigInteger, m.bigInteger))
 
   /** Returns a BigInt whose value is (the inverse of <tt>this</tt> modulo <tt>m</tt>).
    */
-  def modInverse (m: BigInt): BigInt = new BigInt(this.bigInteger.modInverse(m.bigInteger))
+  def modInverse (m: BigInt): BigInt = BigInt(this.bigInteger.modInverse(m.bigInteger))
 
   /** Returns a BigInt whose value is the negation of this BigInt
    */
-  def unary_- : BigInt   = new BigInt(this.bigInteger.negate())
+  def unary_- : BigInt   = BigInt(this.bigInteger.negate())
 
   /** Returns the absolute value of this BigInt
    */
-  def abs: BigInt = new BigInt(this.bigInteger.abs())
+  def abs: BigInt = BigInt(this.bigInteger.abs())
 
   /** Returns the sign of this BigInt;
    *   -1 if it is less than 0,
@@ -289,7 +289,7 @@ final class BigInt(val bigInteger: BigInteger)
 
   /** Returns the bitwise complement of this BigInt
    */
-  def unary_~ : BigInt = new BigInt(this.bigInteger.not())
+  def unary_~ : BigInt = BigInt(this.bigInteger.not())
 
   /** Returns true if and only if the designated bit is set.
    */
@@ -297,15 +297,15 @@ final class BigInt(val bigInteger: BigInteger)
 
   /** Returns a BigInt whose value is equivalent to this BigInt with the designated bit set.
    */
-  def setBit  (n: Int): BigInt  = new BigInt(this.bigInteger.setBit(n))
+  def setBit  (n: Int): BigInt  = BigInt(this.bigInteger.setBit(n))
 
   /** Returns a BigInt whose value is equivalent to this BigInt with the designated bit cleared.
    */
-  def clearBit(n: Int): BigInt  = new BigInt(this.bigInteger.clearBit(n))
+  def clearBit(n: Int): BigInt  = BigInt(this.bigInteger.clearBit(n))
 
   /** Returns a BigInt whose value is equivalent to this BigInt with the designated bit flipped.
    */
-  def flipBit (n: Int): BigInt  = new BigInt(this.bigInteger.flipBit(n))
+  def flipBit (n: Int): BigInt  = BigInt(this.bigInteger.flipBit(n))
 
   /** Returns the index of the rightmost (lowest-order) one bit in this BigInt
    * (the number of zero bits to the right of the rightmost one bit).
