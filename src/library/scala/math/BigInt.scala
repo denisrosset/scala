@@ -110,12 +110,27 @@ object BigInt {
   implicit def javaBigInteger2bigInt(x: BigInteger): BigInt = apply(x)
 }
 
-final class BigInt(val bigInteger: BigInteger)
+/** A type with efficient encoding of arbitrary integers.
+ *
+ * It wraps `java.math.BigInteger`, with optimization for small values that can be encoded in a `Long`.
+ */
+final class BigInt private (private val _bigInteger: BigInteger, private val _long: Long)
   extends ScalaNumber
     with ScalaNumericConversions
     with Serializable
     with Ordered[BigInt]
 {
+  // Class invariant: if the number fits in a Long, then _bigInteger is null and the number is stored in _long
+  //                  otherwise, _bigInteger stores the number and _long = 0L
+  def this(_bigInteger: BigInteger) = this(
+    if (_bigInteger.bitLength <= 63) null else _bigInteger,
+    if (_bigInteger.bitLength <= 63) _bigInteger.longValue else 0L
+  )
+
+  private def this(_long: Long) = this(null, _long)
+
+  def bigInteger: BigInteger = if (_bigInteger eq null) BigInteger.valueOf(_long) else _bigInteger
+
   /** Returns the hash code for this BigInt. */
   override def hashCode(): Int =
     if (isValidLong) unifiedPrimitiveHashcode
@@ -130,11 +145,13 @@ final class BigInt(val bigInteger: BigInteger)
     case that: Float      => isValidFloat && toFloat == that
     case x                => isValidLong && unifiedPrimitiveEquals(x)
   }
-  override def isValidByte: Boolean = this >= Byte.MinValue && this <= Byte.MaxValue
-  override def isValidShort: Boolean = this >= Short.MinValue && this <= Short.MaxValue
-  override def isValidChar: Boolean = this >= Char.MinValue && this <= Char.MaxValue
-  override def isValidInt: Boolean = this >= Int.MinValue && this <= Int.MaxValue
-           def isValidLong: Boolean = this >= Long.MinValue && this <= Long.MaxValue
+
+  override def isValidByte: Boolean = isValidLong && _long >= Byte.MinValue && _long <= Byte.MaxValue
+  override def isValidShort: Boolean = isValidLong && _long >= Short.MinValue && _long <= Short.MaxValue
+  override def isValidChar: Boolean = isValidLong && _long >= Char.MinValue && _long <= Char.MaxValue
+  override def isValidInt: Boolean = isValidLong && _long >= Int.MinValue && _long <= Int.MaxValue
+           def isValidLong: Boolean = (_bigInteger eq null)
+
   /** Returns `true` iff this can be represented exactly by [[scala.Float]]; otherwise returns `false`.
     */
   def isValidFloat: Boolean = {
@@ -176,35 +193,85 @@ final class BigInt(val bigInteger: BigInteger)
 
   /** Compares this BigInt with the specified BigInt for equality.
    */
-  def equals (that: BigInt): Boolean = compare(that) == 0
+  def equals (that: BigInt): Boolean = (this eq that) || (
+    if (this.isValidLong) {
+      if (that.isValidLong) this._long == that._long else false
+    } else {
+      if (that.isValidLong) false else this._bigInteger == that._bigInteger
+    }
+    )
 
   /** Compares this BigInt with the specified BigInt
    */
-  def compare (that: BigInt): Int = this.bigInteger.compareTo(that.bigInteger)
+  def compare (that: BigInt): Int =
+    if (this.isValidLong) {
+      if (that.isValidLong) java.lang.Long.compare(this._long, that._long) else -that._bigInteger.signum()
+    } else {
+      if (that.isValidLong) this.signum else this._bigInteger.compareTo(that._bigInteger)
+    }
 
   /** Addition of BigInts
    */
-  def +  (that: BigInt): BigInt = new BigInt(this.bigInteger.add(that.bigInteger))
+  def +  (that: BigInt): BigInt = {
+    if (this.isValidLong && that.isValidLong) { // fast path
+      val x = this._long
+      val y = that._long
+      val z = x + y
+      if ((~(x ^ y) & (x ^ z)) >= 0L) return new BigInt(z)
+    }
+    new BigInt(this.bigInteger.add(that.bigInteger))
+  }
 
   /** Subtraction of BigInts
    */
-  def -  (that: BigInt): BigInt = new BigInt(this.bigInteger.subtract(that.bigInteger))
+  def -  (that: BigInt): BigInt = {
+    if (this.isValidLong && that.isValidLong) { // fast path
+      val x = this._long
+      val y = that._long
+      val z = x - y
+      if (((x ^ y) & (x ^ z)) >= 0L) return new BigInt(z)
+    }
+    new BigInt(this.bigInteger.subtract(that.bigInteger))
+  }
 
   /** Multiplication of BigInts
    */
-  def *  (that: BigInt): BigInt = new BigInt(this.bigInteger.multiply(that.bigInteger))
+  def *  (that: BigInt): BigInt = {
+    if (this.isValidLong && that.isValidLong) { // fast path
+      val x = this._long
+      val y = that._long
+      val z = x * y
+      if (x == 0 || (y == z / x && !(x == -1 && y == Long.MinValue))) return new BigInt(z)
+    }
+    new BigInt(this.bigInteger.multiply(that.bigInteger))
+  }
 
   /** Division of BigInts
    */
-  def /  (that: BigInt): BigInt = new BigInt(this.bigInteger.divide(that.bigInteger))
+  def /  (that: BigInt): BigInt = {
+    if (this.isValidLong && that.isValidLong) { // fast path
+      if (this._long != Long.MinValue || that._long != -1) return new BigInt(this._long / that._long)
+    }
+    new BigInt(this.bigInteger.divide(that.bigInteger))
+  }
 
   /** Remainder of BigInts
    */
-  def %  (that: BigInt): BigInt = new BigInt(this.bigInteger.remainder(that.bigInteger))
+  def %  (that: BigInt): BigInt = {
+    if (this.isValidLong && that.isValidLong) { // fast path
+      if (this._long != Long.MinValue || that._long != -1) return new BigInt(this._long % that._long)
+    }
+    new BigInt(this.bigInteger.remainder(that.bigInteger))
+  }
 
   /** Returns a pair of two BigInts containing (this / that) and (this % that).
    */
   def /% (that: BigInt): (BigInt, BigInt) = {
+    if (this.isValidLong && that.isValidLong) {
+      val x = this._long
+      val y = that._long
+      if (x != Long.MinValue || y != -1) return (new BigInt(x / y), new BigInt(x % y))
+    }
     val dr = this.bigInteger.divideAndRemainder(that.bigInteger)
     (new BigInt(dr(0)), new BigInt(dr(1)))
   }
@@ -219,19 +286,31 @@ final class BigInt(val bigInteger: BigInteger)
 
   /** Bitwise and of BigInts
    */
-  def &  (that: BigInt): BigInt = new BigInt(this.bigInteger.and(that.bigInteger))
+  def &  (that: BigInt): BigInt =
+    if (this.isValidLong && that.isValidLong)
+      new BigInt(this._long & that._long)
+    else new BigInt(this.bigInteger.and(that.bigInteger))
 
   /** Bitwise or of BigInts
    */
-  def |  (that: BigInt): BigInt = new BigInt(this.bigInteger.or (that.bigInteger))
+  def |  (that: BigInt): BigInt =
+    if (this.isValidLong && that.isValidLong)
+      new BigInt(this._long | that._long)
+    else new BigInt(this.bigInteger.or (that.bigInteger))
 
   /** Bitwise exclusive-or of BigInts
    */
-  def ^  (that: BigInt): BigInt = new BigInt(this.bigInteger.xor(that.bigInteger))
+  def ^  (that: BigInt): BigInt =
+    if (this.isValidLong && that.isValidLong)
+      new BigInt(this._long ^ that._long)
+    else new BigInt(this.bigInteger.xor(that.bigInteger))
 
   /** Bitwise and-not of BigInts. Returns a BigInt whose value is (this & ~that).
    */
-  def &~ (that: BigInt): BigInt = new BigInt(this.bigInteger.andNot(that.bigInteger))
+  def &~ (that: BigInt): BigInt =
+    if (this.isValidLong && that.isValidLong)
+      new BigInt(this._long & ~that._long)
+    else new BigInt(this.bigInteger.andNot(that.bigInteger))
 
   /** Returns the greatest common divisor of abs(this) and abs(that)
    */
@@ -245,11 +324,13 @@ final class BigInt(val bigInteger: BigInteger)
 
   /** Returns the minimum of this and that
    */
-  def min (that: BigInt): BigInt = new BigInt(this.bigInteger.min(that.bigInteger))
+  def min (that: BigInt): BigInt =
+    if (this <= that) this else that
 
   /** Returns the maximum of this and that
    */
-  def max (that: BigInt): BigInt = new BigInt(this.bigInteger.max(that.bigInteger))
+  def max (that: BigInt): BigInt =
+    if (this >= that) this else that
 
   /** Returns a BigInt whose value is (<tt>this</tt> raised to the power of <tt>exp</tt>).
    */
@@ -271,14 +352,14 @@ final class BigInt(val bigInteger: BigInteger)
 
   /** Returns the absolute value of this BigInt
    */
-  def abs: BigInt = new BigInt(this.bigInteger.abs())
+  def abs: BigInt = if (signum < 0) -this else this
 
   /** Returns the sign of this BigInt;
    *   -1 if it is less than 0,
    *   +1 if it is greater than 0,
    *   0  if it is equal to 0.
    */
-  def signum: Int = this.bigInteger.signum()
+  def signum: Int = if (isValidLong) java.lang.Long.signum(_long) else _bigInteger.signum()
 
   /** Returns the sign of this BigInt;
    *   -1 if it is less than 0,
@@ -358,7 +439,7 @@ final class BigInt(val bigInteger: BigInteger)
    *  overall magnitude of the BigInt value as well as return a result with
    *  the opposite sign.
    */
-  def intValue: Int = this.bigInteger.intValue
+  def intValue: Int = if (isValidLong) _long.intValue else this.bigInteger.intValue
 
   /** Converts this BigInt to a <tt>long</tt>.
    *  If the BigInt is too big to fit in a long, only the low-order 64 bits
@@ -366,7 +447,7 @@ final class BigInt(val bigInteger: BigInteger)
    *  overall magnitude of the BigInt value as well as return a result with
    *  the opposite sign.
    */
-  def longValue: Long = this.bigInteger.longValue
+  def longValue: Long = if (isValidLong) _long else _bigInteger.longValue
 
   /** Converts this `BigInt` to a `float`.
    *  If this `BigInt` has too great a magnitude to represent as a float,
@@ -380,7 +461,7 @@ final class BigInt(val bigInteger: BigInteger)
    *  it will be converted to `Double.NEGATIVE_INFINITY` or
    *  `Double.POSITIVE_INFINITY` as appropriate.
    */
-  def doubleValue: Double = this.bigInteger.doubleValue
+  def doubleValue: Double = if (isValidInt) _long.toDouble else this.bigInteger.doubleValue
 
   /** Create a `NumericRange[BigInt]` in range `[start;end)`
    *  with the specified step, where start is the target BigInt.
@@ -397,7 +478,7 @@ final class BigInt(val bigInteger: BigInteger)
 
   /** Returns the decimal String representation of this BigInt.
    */
-  override def toString(): String = this.bigInteger.toString()
+  override def toString(): String = if (isValidLong) _long.toString() else _bigInteger.toString()
 
   /** Returns the String representation in the specified radix of this BigInt.
    */
