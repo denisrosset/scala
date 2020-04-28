@@ -336,11 +336,13 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
 
   /** Leftshift of BigInt
    */
-  def << (n: Int): BigInt = new BigInt(this.bigInteger.shiftLeft(n))
+  def << (n: Int): BigInt =
+    if (longEncoding && n <= 0) this >> (-n) else new BigInt(this.bigInteger.shiftLeft(n))
 
   /** (Signed) rightshift of BigInt
    */
-  def >> (n: Int): BigInt = new BigInt(this.bigInteger.shiftRight(n))
+  def >> (n: Int): BigInt =
+    if (longEncoding && n >= 0) new BigInt(_long >> n) else new BigInt(this.bigInteger.shiftRight(n))
 
   /** Bitwise and of BigInts
    */
@@ -461,7 +463,12 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
   /** Returns true if and only if the designated bit is set.
    */
   def testBit (n: Int): Boolean =
-    if (longEncoding && n <= 63) (_long & (1L << n)) != 0 else this.bigInteger.testBit(n)
+    if (longEncoding) {
+      if (n <= 63)
+        (_long & (1L << n)) != 0
+      else
+        _long < 0 // give the sign bit
+    } else _bigInteger.testBit(n)
 
   /** Returns a BigInt whose value is equivalent to this BigInt with the designated bit set.
    */
@@ -481,7 +488,7 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
   /** Returns the index of the rightmost (lowest-order) one bit in this BigInt
    * (the number of zero bits to the right of the rightmost one bit).
    */
-  def lowestSetBit: Int         =
+  def lowestSetBit: Int =
     if (longEncoding) {
       if (_long == 0) -1 else java.lang.Long.numberOfTrailingZeros(_long)
     } else this.bigInteger.getLowestSetBit()
@@ -489,7 +496,7 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
   /** Returns the number of bits in the minimal two's-complement representation of this BigInt,
    *  excluding a sign bit.
    */
-  def bitLength: Int            =
+  def bitLength: Int =
   // bitLength is defined as ceil(log2(this < 0 ? -this : this + 1)))
   // where ceil(log2(x)) = 64 - numberOfLeadingZeros(x - 1)
     if (longEncoding) {
@@ -500,7 +507,7 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
   /** Returns the number of bits in the two's complement representation of this BigInt
    *  that differ from its sign bit.
    */
-  def bitCount: Int             =
+  def bitCount: Int =
     if (longEncoding) {
       if (_long < 0) java.lang.Long.bitCount(-(_long + 1)) else java.lang.Long.bitCount(_long)
     } else this.bigInteger.bitCount()
@@ -563,7 +570,9 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
    *  it will be converted to `Double.NEGATIVE_INFINITY` or
    *  `Double.POSITIVE_INFINITY` as appropriate.
    */
-  def doubleValue: Double = if (isValidInt) _long.toDouble else this.bigInteger.doubleValue
+  def doubleValue: Double =
+    if (isValidLong && (-(1L << 53) <= _long && _long <= (1L << 53))) _long.toDouble
+    else this.bigInteger.doubleValue
 
   /** Create a `NumericRange[BigInt]` in range `[start;end)`
    *  with the specified step, where start is the target BigInt.
