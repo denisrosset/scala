@@ -275,7 +275,7 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
       val x = this._long
       val y = that._long
       val z = x + y
-      if ((~(x ^ y) & (x ^ z)) >= 0L) new BigInt(z)
+      if ((~(x ^ y) & (x ^ z)) >= 0L) return new BigInt(z)
     }
     new BigInt(this.bigInteger.add(that.bigInteger))
   }
@@ -287,7 +287,7 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
       val x = this._long
       val y = that._long
       val z = x - y
-      if (((x ^ y) & (x ^ z)) >= 0L) new BigInt(z)
+      if (((x ^ y) & (x ^ z)) >= 0L) return new BigInt(z)
     }
     new BigInt(this.bigInteger.subtract(that.bigInteger))
   }
@@ -299,7 +299,7 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
       val x = this._long
       val y = that._long
       val z = x * y
-      if (x == 0 || (y == z / x && !(x == -1 && y == Long.MinValue))) new BigInt(z)
+      if (x == 0 || (y == z / x && !(x == -1 && y == Long.MinValue))) return new BigInt(z)
     }
     new BigInt(this.bigInteger.multiply(that.bigInteger))
   }
@@ -308,7 +308,7 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
    */
   def /  (that: BigInt): BigInt = {
     if (this.longEncoding && that.longEncoding) { // fast path
-      if (this._long != Long.MinValue || that._long != -1) new BigInt(this._long / that._long)
+      if (this._long != Long.MinValue || that._long != -1) return new BigInt(this._long / that._long)
     }
     new BigInt(this.bigInteger.divide(that.bigInteger))
   }
@@ -317,7 +317,7 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
    */
   def %  (that: BigInt): BigInt = {
     if (this.longEncoding && that.longEncoding) { // fast path
-      if (this._long != Long.MinValue || that._long != -1) new BigInt(this._long % that._long)
+      if (this._long != Long.MinValue || that._long != -1) return new BigInt(this._long % that._long)
     }
     new BigInt(this.bigInteger.remainder(that.bigInteger))
   }
