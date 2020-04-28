@@ -25,6 +25,17 @@ object BigInt {
   private[this] val minCached = -1024
   private[this] val maxCached = 1024
   private[this] val cache = new Array[BigInt](maxCached - minCached + 1)
+
+  private[this] def getCached(i: Int): BigInt = {
+    val offset = i - minCached
+    var n = cache(offset)
+    if (n eq null) {
+      n = new BigInt(i.toLong)
+      cache(offset) = n
+    }
+    n
+  }
+
   private val minusOne = BigInteger.valueOf(-1)
 
   /** Constructs a `BigInt` whose value is equal to that of the
@@ -34,12 +45,7 @@ object BigInt {
    *  @return  the constructed `BigInt`
    */
   def apply(i: Int): BigInt =
-    if (minCached <= i && i <= maxCached) {
-      val offset = i - minCached
-      var n = cache(offset)
-      if (n eq null) { n = new BigInt(BigInteger.valueOf(i.toLong)); cache(offset) = n }
-      n
-    } else new BigInt(i: Long)
+    if (minCached <= i && i <= maxCached) getCached(i) else new BigInt(i: Long)
 
   /** Constructs a `BigInt` whose value is equal to that of the
    *  specified long value.
@@ -48,8 +54,7 @@ object BigInt {
    *  @return  the constructed `BigInt`
    */
   def apply(l: Long): BigInt =
-    if (minCached <= l && l <= maxCached) apply(l.toInt)
-    else new BigInt(l)
+    if (minCached <= l && l <= maxCached) getCached(l.toInt) else new BigInt(l)
 
   /** Translates a byte array containing the two's-complement binary
    *  representation of a BigInt into a BigInt.
