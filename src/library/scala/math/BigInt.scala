@@ -342,8 +342,12 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
   /** (Signed) rightshift of BigInt
    */
   def >> (n: Int): BigInt =
-    if (longEncoding && n >= 0) new BigInt(_long >> n) else new BigInt(this.bigInteger.shiftRight(n))
-
+    if (longEncoding && n >= 0) {
+      if (n < 64) new BigInt(_long >> n)
+      else if (_long < 0) BigInt(-1)
+      else BigInt(0) // for _long >= 0
+    } else new BigInt(this.bigInteger.shiftRight(n))
+  
   /** Bitwise and of BigInts
    */
   def &  (that: BigInt): BigInt =
