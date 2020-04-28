@@ -275,7 +275,7 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
       val x = this._long
       val y = that._long
       val z = x + y
-      if ((~(x ^ y) & (x ^ z)) >= 0L) return new BigInt(z)
+      if ((~(x ^ y) & (x ^ z)) >= 0L) return BigInt(z)
     }
     new BigInt(this.bigInteger.add(that.bigInteger))
   }
@@ -287,7 +287,7 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
       val x = this._long
       val y = that._long
       val z = x - y
-      if (((x ^ y) & (x ^ z)) >= 0L) return new BigInt(z)
+      if (((x ^ y) & (x ^ z)) >= 0L) return BigInt(z)
     }
     new BigInt(this.bigInteger.subtract(that.bigInteger))
   }
@@ -299,7 +299,7 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
       val x = this._long
       val y = that._long
       val z = x * y
-      if (x == 0 || (y == z / x && !(x == -1 && y == Long.MinValue))) return new BigInt(z)
+      if (x == 0 || (y == z / x && !(x == -1 && y == Long.MinValue))) return BigInt(z)
     }
     new BigInt(this.bigInteger.multiply(that.bigInteger))
   }
@@ -308,7 +308,7 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
    */
   def /  (that: BigInt): BigInt = {
     if (this.longEncoding && that.longEncoding) { // fast path
-      if (this._long != Long.MinValue || that._long != -1) return new BigInt(this._long / that._long)
+      if (this._long != Long.MinValue || that._long != -1) return BigInt(this._long / that._long)
     }
     new BigInt(this.bigInteger.divide(that.bigInteger))
   }
@@ -317,7 +317,7 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
    */
   def %  (that: BigInt): BigInt = {
     if (this.longEncoding && that.longEncoding) { // fast path
-      if (this._long != Long.MinValue || that._long != -1) return new BigInt(this._long % that._long)
+      if (this._long != Long.MinValue || that._long != -1) return BigInt(this._long % that._long)
     }
     new BigInt(this.bigInteger.remainder(that.bigInteger))
   }
@@ -328,7 +328,7 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
     if (this.longEncoding && that.longEncoding) {
       val x = this._long
       val y = that._long
-      if (x != Long.MinValue || y != -1) return (new BigInt(x / y), new BigInt(x % y))
+      if (x != Long.MinValue || y != -1) return (BigInt(x / y), BigInt(x % y))
     }
     val dr = this.bigInteger.divideAndRemainder(that.bigInteger)
     (new BigInt(dr(0)), new BigInt(dr(1)))
@@ -343,7 +343,7 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
    */
   def >> (n: Int): BigInt =
     if (longEncoding && n >= 0) {
-      if (n < 64) new BigInt(_long >> n)
+      if (n < 64) BigInt(_long >> n)
       else if (_long < 0) BigInt(-1)
       else BigInt(0) // for _long >= 0
     } else new BigInt(this.bigInteger.shiftRight(n))
@@ -352,28 +352,28 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
    */
   def &  (that: BigInt): BigInt =
     if (this.longEncoding && that.longEncoding)
-      new BigInt(this._long & that._long)
+      BigInt(this._long & that._long)
     else new BigInt(this.bigInteger.and(that.bigInteger))
 
   /** Bitwise or of BigInts
    */
   def |  (that: BigInt): BigInt =
     if (this.longEncoding && that.longEncoding)
-      new BigInt(this._long | that._long)
+      BigInt(this._long | that._long)
     else new BigInt(this.bigInteger.or (that.bigInteger))
 
   /** Bitwise exclusive-or of BigInts
    */
   def ^  (that: BigInt): BigInt =
     if (this.longEncoding && that.longEncoding)
-      new BigInt(this._long ^ that._long)
+      BigInt(this._long ^ that._long)
     else new BigInt(this.bigInteger.xor(that.bigInteger))
 
   /** Bitwise and-not of BigInts. Returns a BigInt whose value is (this & ~that).
    */
   def &~ (that: BigInt): BigInt =
     if (this.longEncoding && that.longEncoding)
-      new BigInt(this._long & ~that._long)
+      BigInt(this._long & ~that._long)
     else new BigInt(this.bigInteger.andNot(that.bigInteger))
 
   /** Returns the greatest common divisor of abs(this) and abs(that)
@@ -386,7 +386,7 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
       if (that.longEncoding) {
         if (that._long == 0) return this.abs
         // if (that._long == Long.MinValue) return this gcd (-that)
-        new BigInt(BigInt.longGcd(this._long.abs, that._long.abs))
+        BigInt(BigInt.longGcd(this._long.abs, that._long.abs))
       } else that gcd this // force the BigInteger on the left
     } else {
       // this is not a valid long
@@ -395,7 +395,7 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
         // if (that._long == Long.MinValue) return this gcd (-that)
         val red = (this._bigInteger mod BigInteger.valueOf(that._long.abs)).longValue()
         if (red == 0) return that.abs
-        new BigInt(BigInt.longGcd(that._long.abs, red))
+        BigInt(BigInt.longGcd(that._long.abs, red))
       } else
         new BigInt(this.bigInteger.gcd(that.bigInteger))
     }
@@ -408,7 +408,7 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
   def mod (that: BigInt): BigInt =
     if (this.longEncoding && that.longEncoding) {
       val res = this._long % that._long
-      if (res >= 0) new BigInt(res) else new BigInt(res + that._long)
+      if (res >= 0) BigInt(res) else BigInt(res + that._long)
     } else new BigInt(this.bigInteger.mod(that.bigInteger))
 
   /** Returns the minimum of this and that
@@ -438,7 +438,7 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
   /** Returns a BigInt whose value is the negation of this BigInt
    */
   def unary_- : BigInt   =
-    if (longEncoding) new BigInt(-_long) else new BigInt(this.bigInteger.negate())
+    if (longEncoding) BigInt(-_long) else new BigInt(this.bigInteger.negate())
 
   /** Returns the absolute value of this BigInt
    */
@@ -462,7 +462,7 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
    */
   def unary_~ : BigInt =
     // it is equal to -(this + 1)
-    if (longEncoding && _long != Long.MaxValue) new BigInt(-(_long + 1)) else new BigInt(this.bigInteger.not())
+    if (longEncoding && _long != Long.MaxValue) BigInt(-(_long + 1)) else new BigInt(this.bigInteger.not())
 
   /** Returns true if and only if the designated bit is set.
    */
@@ -477,17 +477,17 @@ final class BigInt private (private var _bigInteger: BigInteger, private val _lo
   /** Returns a BigInt whose value is equivalent to this BigInt with the designated bit set.
    */
   def setBit  (n: Int): BigInt  = // note that we do not operate on the Long sign bit #63
-    if (longEncoding && n <= 62) new BigInt(_long | (1L << n)) else new BigInt(this.bigInteger.setBit(n))
+    if (longEncoding && n <= 62) BigInt(_long | (1L << n)) else new BigInt(this.bigInteger.setBit(n))
 
   /** Returns a BigInt whose value is equivalent to this BigInt with the designated bit cleared.
    */
   def clearBit(n: Int): BigInt  = // note that we do not operate on the Long sign bit #63
-    if (longEncoding && n <= 62) new BigInt(_long & ~(1L << n)) else new BigInt(this.bigInteger.clearBit(n))
+    if (longEncoding && n <= 62) BigInt(_long & ~(1L << n)) else new BigInt(this.bigInteger.clearBit(n))
 
   /** Returns a BigInt whose value is equivalent to this BigInt with the designated bit flipped.
    */
   def flipBit (n: Int): BigInt  = // note that we do not operate on the Long sign bit #63
-    if (longEncoding && n <= 62) new BigInt(_long ^ (1L << n)) else new BigInt(this.bigInteger.flipBit(n))
+    if (longEncoding && n <= 62) BigInt(_long ^ (1L << n)) else new BigInt(this.bigInteger.flipBit(n))
 
   /** Returns the index of the rightmost (lowest-order) one bit in this BigInt
    * (the number of zero bits to the right of the rightmost one bit).
